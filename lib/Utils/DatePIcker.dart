@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -50,6 +52,8 @@ Future<void> showCustomDatePicker(
 ) async {
   DateTime tempSelectedDate = selectedDate;
   DateTime tempDisplayedMonth = selectedDate;
+  var width = MediaQuery.of(context).size.width;
+  var height = MediaQuery.of(context).size.height;
 
   await showDialog(
     context: context,
@@ -60,260 +64,264 @@ Future<void> showCustomDatePicker(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.0),
         ),
-        title: StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: const EdgeInsets.all(9.0),
-              child: Column(
-                children: [
-                  if (Start == 0) ...[
-                    // Quick Select Buttons (Added Next Month)
-                    FittedBox(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildQuickSelectButton(
-                            context,
-                            "Today",
-                            DateTime.now(),
-                            (date) {
-                              tempSelectedDate = date;
-                            },
-                            setState,
-                            tempSelectedDate, // Pass selected date
-                            // Pass the setState function here
-                          ),
-                          SizedBox(width: 15),
-                          _buildQuickSelectButton(
-                            context,
-                            "Next Monday",
-                            _nextWeekday(DateTime.monday),
-                            (date) {
-                              tempSelectedDate = date;
-                            },
-                            setState,
-                            tempSelectedDate, // Pass selected date
-                          ),
-                        ],
+        title: SizedBox(
+          width: Platform.isAndroid ? width : width / 2,
+          height: Platform.isAndroid ? 480 : height,
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Padding(
+                padding: const EdgeInsets.all(9.0),
+                child: Column(
+                  children: [
+                    if (Start == 0) ...[
+                      // Quick Select Buttons (Added Next Month)
+                      FittedBox(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildQuickSelectButton(
+                              context,
+                              "Today",
+                              DateTime.now(),
+                              (date) {
+                                tempSelectedDate = date;
+                              },
+                              setState,
+                              tempSelectedDate, // Pass selected date
+                              // Pass the setState function here
+                            ),
+                            SizedBox(width: 15),
+                            _buildQuickSelectButton(
+                              context,
+                              "Next Monday",
+                              _nextWeekday(DateTime.monday),
+                              (date) {
+                                tempSelectedDate = date;
+                              },
+                              setState,
+                              tempSelectedDate, // Pass selected date
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 10),
+
+                      FittedBox(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildQuickSelectButton(
+                              context,
+                              "Next Tuesday",
+                              _nextWeekday(DateTime.tuesday),
+                              (date) {
+                                setState(() => tempSelectedDate = date);
+                              },
+                              setState,
+                              tempSelectedDate, // Pass selected date
+                            ),
+                            SizedBox(width: 15),
+
+                            _buildQuickSelectButton(
+                              context,
+                              "After 1 Week",
+                              DateTime.now().add(Duration(days: 7)),
+                              (date) {
+                                setState(() => tempSelectedDate = date);
+                              },
+                              setState,
+                              tempSelectedDate, // Pass selected date
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (Start == 1)
+                      FittedBox(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildQuickSelectButton(
+                              context,
+                              "No Date",
+                              DateTime(
+                                0,
+                              ), // A special value to indicate "No Date"
+                              (date) {
+                                setState(() => tempSelectedDate = DateTime(0));
+                              },
+                              setState,
+                              tempSelectedDate, // Pass selected date
+                            ),
+                            SizedBox(width: 15),
+
+                            _buildQuickSelectButton(
+                              context,
+                              "Today",
+                              DateTime.now(),
+                              (date) {
+                                tempSelectedDate = date;
+                              },
+                              setState,
+                              tempSelectedDate, // Pass selected date
+                              // Pass the setState function here
+                            ),
+                          ],
+                        ),
+                      ),
+
                     const SizedBox(height: 10),
 
+                    // Month Navigation
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_left, size: 28),
+                          onPressed: () {
+                            setState(() {
+                              tempDisplayedMonth = DateTime(
+                                tempDisplayedMonth.year,
+                                tempDisplayedMonth.month - 1,
+                                1,
+                              );
+                            });
+                          },
+                        ),
+                        Text(
+                          DateFormat.yMMMM().format(tempDisplayedMonth),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_right, size: 28),
+                          onPressed: () {
+                            setState(() {
+                              tempDisplayedMonth = DateTime(
+                                tempDisplayedMonth.year,
+                                tempDisplayedMonth.month + 1,
+                                1,
+                              );
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    // Calendar Grid
+                    _buildCalendar(
+                      tempDisplayedMonth,
+                      tempSelectedDate,
+                      (date) {
+                        setState(() => tempSelectedDate = date);
+                      },
+                      setState,
+                      Start,
+                      tempSelectedDate,
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Selected Date Display & Buttons
                     FittedBox(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildQuickSelectButton(
-                            context,
-                            "Next Tuesday",
-                            _nextWeekday(DateTime.tuesday),
-                            (date) {
-                              setState(() => tempSelectedDate = date);
-                            },
-                            setState,
-                            tempSelectedDate, // Pass selected date
+                          Row(
+                            children: [
+                              Image.asset(
+                                "assets/date.png",
+                                color: lightBlueColour,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                tempSelectedDate == DateTime(0)
+                                    ? "No Date"
+                                    : DateFormat.yMMMMd().format(
+                                      tempSelectedDate,
+                                    ),
+                                style: TextStyle(
+                                  color: const Color(0xFF323238),
+                                  fontSize: 16,
+                                  fontFamily: 'Roboto',
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.25,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 15),
+                          SizedBox(width: 10),
 
-                          _buildQuickSelectButton(
-                            context,
-                            "After 1 Week",
-                            DateTime.now().add(Duration(days: 7)),
-                            (date) {
-                              setState(() => tempSelectedDate = date);
-                            },
-                            setState,
-                            tempSelectedDate, // Pass selected date
+                          FittedBox(
+                            child: Row(
+                              children: [
+                                InkWell(
+                                  onTap: () => Navigator.pop(context),
+                                  child: Container(
+                                    width: 73,
+                                    height: 40,
+                                    decoration: ShapeDecoration(
+                                      color: const Color(0xFFEDF8FF),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: const Text(
+                                        "Cancel",
+                                        style: TextStyle(
+                                          color: const Color(0xFF1DA1F2),
+                                          fontSize: 14,
+                                          fontFamily: 'Roboto',
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 5),
+                                InkWell(
+                                  onTap: () {
+                                    onDateSelected(tempSelectedDate);
+                                    Navigator.pop(context);
+                                  },
+                                  child: Container(
+                                    width: 73,
+                                    height: 40,
+                                    decoration: ShapeDecoration(
+                                      color: const Color(0xFF1DA1F2),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: const Text(
+                                        "Save",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontFamily: 'Roboto',
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ],
-                  if (Start == 1)
-                    FittedBox(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildQuickSelectButton(
-                            context,
-                            "No Date",
-                            DateTime(
-                              0,
-                            ), // A special value to indicate "No Date"
-                            (date) {
-                              setState(() => tempSelectedDate = DateTime(0));
-                            },
-                            setState,
-                            tempSelectedDate, // Pass selected date
-                          ),
-                          SizedBox(width: 15),
-
-                          _buildQuickSelectButton(
-                            context,
-                            "Today",
-                            DateTime.now(),
-                            (date) {
-                              tempSelectedDate = date;
-                            },
-                            setState,
-                            tempSelectedDate, // Pass selected date
-                            // Pass the setState function here
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  const SizedBox(height: 10),
-
-                  // Month Navigation
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_left, size: 28),
-                        onPressed: () {
-                          setState(() {
-                            tempDisplayedMonth = DateTime(
-                              tempDisplayedMonth.year,
-                              tempDisplayedMonth.month - 1,
-                              1,
-                            );
-                          });
-                        },
-                      ),
-                      Text(
-                        DateFormat.yMMMM().format(tempDisplayedMonth),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.arrow_right, size: 28),
-                        onPressed: () {
-                          setState(() {
-                            tempDisplayedMonth = DateTime(
-                              tempDisplayedMonth.year,
-                              tempDisplayedMonth.month + 1,
-                              1,
-                            );
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 5),
-
-                  // Calendar Grid
-                  _buildCalendar(
-                    tempDisplayedMonth,
-                    tempSelectedDate,
-                    (date) {
-                      setState(() => tempSelectedDate = date);
-                    },
-                    setState,
-                    Start,
-                    tempSelectedDate,
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // Selected Date Display & Buttons
-                  FittedBox(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Image.asset(
-                              "assets/date.png",
-                              color: lightBlueColour,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              tempSelectedDate == DateTime(0)
-                                  ? "No Date"
-                                  : DateFormat.yMMMMd().format(
-                                    tempSelectedDate,
-                                  ),
-                              style: TextStyle(
-                                color: const Color(0xFF323238),
-                                fontSize: 16,
-                                fontFamily: 'Roboto',
-                                fontWeight: FontWeight.w400,
-                                height: 1.25,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(width: 10),
-
-                        FittedBox(
-                          child: Row(
-                            children: [
-                              InkWell(
-                                onTap: () => Navigator.pop(context),
-                                child: Container(
-                                  width: 73,
-                                  height: 40,
-                                  decoration: ShapeDecoration(
-                                    color: const Color(0xFFEDF8FF),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: const Text(
-                                      "Cancel",
-                                      style: TextStyle(
-                                        color: const Color(0xFF1DA1F2),
-                                        fontSize: 14,
-                                        fontFamily: 'Roboto',
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 5),
-                              InkWell(
-                                onTap: () {
-                                  onDateSelected(tempSelectedDate);
-                                  Navigator.pop(context);
-                                },
-                                child: Container(
-                                  width: 73,
-                                  height: 40,
-                                  decoration: ShapeDecoration(
-                                    color: const Color(0xFF1DA1F2),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: const Text(
-                                      "Save",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                        fontFamily: 'Roboto',
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+                ),
+              );
+            },
+          ),
         ),
       );
     },

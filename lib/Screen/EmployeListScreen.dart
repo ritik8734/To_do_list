@@ -10,12 +10,22 @@ import '../Bloc/Event.dart';
 import '../Bloc/State.dart';
 import '../SqlLite.dart';
 
-class EmployeeListScreen extends StatelessWidget {
+class EmployeeListScreen extends StatefulWidget {
+  @override
+  State<EmployeeListScreen> createState() => _EmployeeListScreenState();
+}
+
+class _EmployeeListScreenState extends State<EmployeeListScreen> {
+  @override
+  void initState() {
+    data.add(LoadEmployees());
+    // TODO: implement initState
+    super.initState();
+  }
+
+  EmployeeBloc data = EmployeeBloc(DatabaseHelper());
   @override
   Widget build(BuildContext context) {
-    EmployeeBloc data = EmployeeBloc(DatabaseHelper());
-    data.add(LoadEmployees());
-
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: appBar('Employee List'),
@@ -27,6 +37,8 @@ class EmployeeListScreen extends StatelessWidget {
             if (state is EmployeeLoading) {
               return Center(child: CircularProgressIndicator());
             } else if (state is EmployeeLoaded) {
+              print("fdfdfdfdfdfd");
+
               List<Employee> allEmployees = state.employees;
 
               // Filtering employees
@@ -34,6 +46,7 @@ class EmployeeListScreen extends StatelessWidget {
                   allEmployees.where((e) {
                     return e.endDate.isEmpty;
                   }).toList();
+              print("fdfdfdfdfdfd");
 
               List<Employee> previousEmployees =
                   allEmployees.where((e) {
